@@ -103,7 +103,7 @@ Generates a static chart dashboard for the reconciliation results.
 
 A **source-linked, rule-based reconciliation workflow** turns a manual grind into an
 auditable, repeatable process — the same discipline applies to any data-heavy finance
-task！
+task.
 
 ## Tech Stack
 
