@@ -98,7 +98,9 @@ def plot_check_heatmap(df: pd.DataFrame, ax=None) -> None:
             return 0.5  # skipped
         return 1.0 if val == "pass" else 0.0
     
-    heat_data = df[["fund_id"] + check_cols].set_index("fund_id").applymap(_binary)
+    # DataFrame.applymap is deprecated in pandas 2.1 and removed in 3.0;
+    # Series.map keeps this working on both the old and the new API.
+    heat_data = df[["fund_id"] + check_cols].set_index("fund_id").apply(lambda col: col.map(_binary))
     
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
