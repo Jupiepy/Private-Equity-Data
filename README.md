@@ -80,6 +80,17 @@ python reconcile.py \
 > `--history` points to the directory holding the prior-period CSV;
 > `--master` points to the master workbook for the sum-to-master check.
 > Omit either to skip the corresponding check.
+>
+> `--fail-on blocking` (or `flagged`) makes the process exit non-zero when issues
+> of that severity remain, so a scheduled run can gate on the result instead of
+> silently publishing a broken reconciliation. Default is `none` (always exit 0).
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | completed, and no issues at or above `--fail-on` severity |
+| `1` | unresolved issues at or above `--fail-on` severity |
 
 ### Outputs (written to `reports/`)
 

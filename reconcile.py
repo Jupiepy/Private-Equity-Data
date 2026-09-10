@@ -483,6 +483,15 @@ def reconcile(input_dir: Path,
 # ----------------------------------------------------------------------
 
 def main():
+    # Chinese Windows consoles still default to a legacy code page (GBK), which
+    # cannot encode the emoji used in the progress messages -- without this the
+    # pipeline dies with UnicodeEncodeError before writing anything. The other
+    # Windows CRTs get the same treatment harmlessly.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
     parser = argparse.ArgumentParser(description="FOF Valuation Reconciliation")
     parser.add_argument("--input", type=Path, default=Path("sample_data"),
                         help="Directory containing sub-fund Excel reports")
@@ -494,16 +503,31 @@ def main():
                         help="Path to master workbook for sum-to-master check")
     parser.add_argument("--expected-funds", type=int, default=24,
                         help="Expected number of sub-funds")
-    
+    parser.add_argument("--fail-on", choices=("none", "blocking", "flagged"),
+                        default="none",
+                        help="Exit non-zero when issues of this severity or worse remain")
+
     args = parser.parse_args()
-    
-    reconcile(
+
+    df = reconcile(
         input_dir=args.input,
         output_dir=args.output,
         history_dir=args.history,
         master_path=args.master,
         expected_funds=args.expected_funds
     )
+
+    # Exit gate: lets a scheduler or CI job fail on unresolved discrepancies
+    # instead of silently publishing a broken reconciliation.
+    if args.fail_on != "none":
+        counts = df["status"].value_counts().to_dict()
+        blocking = int(counts.get(SEVERITY["blocking"], 0))
+        flagged = int(counts.get(SEVERITY["flagged"], 0))
+        if blocking or (args.fail_on == "flagged" and flagged):
+            print(f"\n❌ {blocking} blocking / {flagged} flagged 个问题未解决"
+                  f" —— 按 --fail-on {args.fail_on} 判定为失败")
+            sys.exit(1)
+        print(f"\n✅ 无 {args.fail_on} 级别问题")
 
 
 if __name__ == "__main__":
