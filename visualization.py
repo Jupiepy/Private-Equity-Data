@@ -11,7 +11,6 @@ Usage:
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-import numpy as np
 from pathlib import Path
 
 # Set style
@@ -92,10 +91,14 @@ def plot_check_heatmap(df: pd.DataFrame, ax=None) -> None:
     if not check_cols:
         return
     
-    # Convert to binary: 1 = pass, 0 = fail/skip
+    # Convert to binary: 1 = pass, 0 = fail, 0.5 = not checked
     def _binary(val):
         if pd.isna(val):
-            return 0.5  # skipped
+            return 0.5
+        # Any "skipped_*" status means the rule never ran, so it is neither a
+        # pass nor a fail -- paint it neutral instead of red.
+        if str(val).startswith("skipped"):
+            return 0.5
         return 1.0 if val == "pass" else 0.0
     
     # DataFrame.applymap is deprecated in pandas 2.1 and removed in 3.0;

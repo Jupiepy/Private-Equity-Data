@@ -15,12 +15,9 @@ Run:
 """
 
 import argparse
-import random
 import sys
-from dataclasses import dataclass, asdict
-from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 import pandas as pd
 import numpy as np
@@ -318,6 +315,9 @@ def validate_cross_quarter_consistency(df: pd.DataFrame,
         extreme_funds = merged.loc[mask_extreme, "fund_id"].tolist()
         
         df.loc[df["fund_id"].isin(extreme_funds), "check_cross_quarter"] = "fail_extreme_growth"
+        # A fund with no prior-period value was never actually compared -- calling
+        # that "pass" turns an unchecked row green in the heatmap.
+        df.loc[~mask_has_prev.to_numpy(), "check_cross_quarter"] = "skipped_no_prior"
         df["growth_rate"] = np.nan
         df.loc[mask_has_prev, "growth_rate"] = growth
         
